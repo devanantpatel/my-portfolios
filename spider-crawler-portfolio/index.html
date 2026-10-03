@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anant Patel — Full-Stack Web Developer</title>
+  <style>
+    :root {
+      --bg: #07080c;
+      --card-bg: #0e131f;
+      --text: #94a3b8;
+      --dim: #475569;
+      --light: #f1f5f9;
+      --border: #1e293b;
+      --spider-color: #00f3ff;
+      --spider-eye: #ff007f;
+      --spider-glow: rgba(0, 243, 255, 0.4);
+      --color-c1: #00f3ff;
+      --color-c2: #ff007f;
+      --color-c3: #ffe600;
+      --color-c4: #39ff14;
+      --color-c5: #bf55ec;
+      --color-c6: #ff793f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', Courier, monospace;
+      line-height: 1.8;
+      overflow-x: hidden;
+      cursor: crosshair;
+    }
+    #spider-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 100;
+    }
+    .status-header {
+      position: sticky; top: 0;
+      background: rgba(7, 8, 12, 0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px; font-size: 11px;
+      display: flex; flex-wrap: wrap; gap: 10px;
+      justify-content: space-between;
+      backdrop-filter: blur(8px); z-index: 50;
+    }
+    .status-header .active {
+      color: var(--spider-color);
+      text-shadow: 0 0 8px var(--spider-glow);
+      font-weight: bold;
+    }
+    .container {
+      max-width: 860px; margin: 0 auto;
+      padding: 40px 18px 80px; position: relative; z-index: 10;
+    }
+    h1 { color: var(--light); font-size: 2.1rem; letter-spacing: -0.5px; margin-bottom: 6px; line-height: 1.2; }
+    .subtitle { font-size: 1.05rem; color: var(--spider-color); margin-bottom: 22px; transition: color 0.4s ease; }
+    h2 {
+      color: var(--light); font-size: 1.25rem;
+      margin-top: 42px; margin-bottom: 16px;
+      border-bottom: 1px dashed #334155; padding-bottom: 8px;
+      text-transform: uppercase;
+    }
+    h3 { color: var(--light); font-size: 1.1rem; margin-bottom: 8px; }
+    p { margin-bottom: 16px; font-size: 14.5px; word-break: break-word; }
+    ul { list-style-type: none; margin-bottom: 22px; }
+    li { margin-bottom: 12px; position: relative; padding-left: 20px; font-size: 14.5px; }
+    li::before { content: "›"; position: absolute; left: 0; color: var(--spider-color); font-weight: bold; }
+    .crawl-node {
+      display: inline-block; padding: 1px 6px; margin: 2px 2px;
+      border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 3px;
+      color: #cbd5e1; transition: all 0.35s ease; position: relative;
+    }
+    .crawl-node.c-1 { background: rgba(0, 243, 255, 0.22); border-color: var(--color-c1); color: #fff; box-shadow: 0 0 12px var(--color-c1); }
+    .crawl-node.c-2 { background: rgba(255, 0, 127, 0.22); border-color: var(--color-c2); color: #fff; box-shadow: 0 0 12px var(--color-c2); }
+    .crawl-node.c-3 { background: rgba(255, 230, 0, 0.22); border-color: var(--color-c3); color: #fff; box-shadow: 0 0 12px var(--color-c3); }
+    .crawl-node.c-4 { background: rgba(57, 255, 20, 0.22); border-color: var(--color-c4); color: #fff; box-shadow: 0 0 12px var(--color-c4); }
+    .crawl-node.c-5 { background: rgba(191, 85, 236, 0.22); border-color: var(--color-c5); color: #fff; box-shadow: 0 0 12px var(--color-c5); }
+    .crawl-node.c-6 { background: rgba(255, 121, 63, 0.22); border-color: var(--color-c6); color: #fff; box-shadow: 0 0 12px var(--color-c6); }
+    .card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      padding: 18px; margin-bottom: 18px; border-radius: 6px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .card:hover { border-color: var(--spider-color); }
+    .card-links { margin-top: 12px; font-size: 13px; }
+    .card-links a, .contact-link {
+      color: var(--spider-color); text-decoration: none; margin-right: 14px;
+      border-bottom: 1px dotted var(--spider-color);
+    }
+    .card-links a:hover, .contact-link:hover { color: #fff; border-bottom-style: solid; }
+    .badge { display: inline-block; font-size: 11px; color: var(--dim); margin-top: 10px; }
+    
+    /* Pagination Styles */
+    .pagination-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 10px; margin-bottom: 24px;
+    }
+    .btn-nav {
+      background: #111827; color: var(--spider-color);
+      border: 1px solid var(--border); padding: 6px 14px;
+      font-family: inherit; font-size: 13px; cursor: pointer;
+      border-radius: 4px; transition: all 0.2s ease;
+    }
+    .btn-nav:hover:not(:disabled) {
+      background: var(--spider-color); color: #000;
+      box-shadow: 0 0 10px var(--spider-glow);
+    }
+    .btn-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+    .page-info { font-size: 12px; color: var(--dim); }
+
+    /* Contact Form Styles */
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 12px; margin-bottom: 6px; color: var(--light); }
+    .form-control {
+      width: 100%; background: #070a12; border: 1px solid var(--border);
+      color: #fff; padding: 10px 12px; font-family: inherit;
+      font-size: 13px; border-radius: 4px; outline: none;
+    }
+    .form-control:focus {
+      border-color: var(--spider-color);
+      box-shadow: 0 0 8px var(--spider-glow);
+    }
+    .btn-submit {
+      width: 100%; background: transparent; color: var(--spider-color);
+      border: 1px solid var(--spider-color); padding: 12px;
+      font-family: inherit; font-size: 14px; font-weight: bold;
+      cursor: pointer; border-radius: 4px; transition: all 0.3s ease;
+    }
+    .btn-submit:hover {
+      background: var(--spider-color); color: #000;
+      box-shadow: 0 0 16px var(--spider-glow);
+    }
+    #form-msg { margin-top: 12px; font-size: 13px; text-align: center; }
+
+    footer {
+      border-top: 1px solid var(--border); padding: 24px 18px;
+      text-align: center; font-size: 12.5px; color: var(--dim);
+      position: relative; z-index: 10;
+    }
+    footer span.highlight { color: var(--spider-color); }
+  </style>
+</head>
+<body>
+
+  <div class="status-header">
+    <div>DAEMON: <span class="active" id="log-status">PATROLLING</span></div>
+    <div>ACTIVE_SEED: <span class="active" id="theme-name">INITIALIZING</span></div>
+    <div>INDEXED_NODES: <span class="active" id="log-counter">0</span></div>
+  </div>
+
+  <canvas id="spider-canvas"></canvas>
+
+  <div class="container">
+    <p style="color: var(--spider-color); font-size: 12px;">// BOT PROFILE ARCHIVE [CRAWLER ACTIVE]</p>
+    <h1>ANANT PATEL</h1>
+    <div class="subtitle">Full-Stack Web Developer (MERN)</div>
+
+    <p>
+      I am a <span class="crawl-node" data-color-id="1">Full-Stack Web Developer</span> with hands-on experience building responsive and functional web applications and implementing real-world project features. Skilled in creating clean, user-friendly interfaces and delivering practical solutions through structured development practices.
+    </p>
+
+    <h2>Technical Skills</h2>
+    <ul>
+      <li>Frontend: <span class="crawl-node" data-color-id="1">ReactJS</span>, <span class="crawl-node" data-color-id="2">JavaScript</span>, <span class="crawl-node" data-color-id="3">HTML5</span>, <span class="crawl-node" data-color-id="4">CSS3</span>, and <span class="crawl-node" data-color-id="5">Bootstrap</span>.</li>
+      <li>Backend: <span class="crawl-node" data-color-id="4">Node.js</span>, <span class="crawl-node" data-color-id="2">Express.js</span>, and <span class="crawl-node" data-color-id="6">REST APIs</span>.</li>
+      <li>Database: <span class="crawl-node" data-color-id="3">SQLite</span> and <span class="crawl-node" data-color-id="1">MongoDB</span> (Learning).</li>
+      <li>Programming: <span class="crawl-node" data-color-id="2">Python</span> and <span class="crawl-node" data-color-id="5">JavaScript (ES6+)</span>.</li>
+      <li>Tools & Platforms: <span class="crawl-node" data-color-id="6">Git</span>, <span class="crawl-node" data-color-id="1">GitHub</span>, <span class="crawl-node" data-color-id="3">VS Code</span>, <span class="crawl-node" data-color-id="4">Postman</span>, <span class="crawl-node" data-color-id="2">Vercel</span>, and <span class="crawl-node" data-color-id="5">Netlify</span>.</li>
+      <li>Focus Areas: <span class="crawl-node" data-color-id="3">AI</span>, <span class="crawl-node" data-color-id="4">Machine Learning</span>, and <span class="crawl-node" data-color-id="6">LLMs</span>.</li>
+    </ul>
+
+    <h2>Featured Projects</h2>
+    <!-- Dynamic Projects Container -->
+    <div id="projects-container">
+      <p style="color: var(--dim);">Loading indexed repositories from GitHub...</p>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-bar">
+      <button class="btn-nav" id="prev-btn" onclick="changePage(-1)">‹ PREV</button>
+      <span class="page-info" id="page-info">PAGE 1 OF 1</span>
+      <button class="btn-nav" id="next-btn" onclick="changePage(1)">NEXT ›</button>
+    </div>
+
+    <h2>Education & Certifications</h2>
+    <div class="card">
+      <h3>Prof. Rajendra Singh (Rajju Bhaiya) University, Prayagraj</h3>
+      <p><span class="crawl-node" data-color-id="3">B.Sc. Mathematics</span> | 2019 - 2022</p>
+
+      <h3 style="margin-top: 16px;">NxtWave Disruptive Technologies</h3>
+      <p><span class="crawl-node" data-color-id="1">Full Stack Web Developer - MERN</span> | 2025 - 2026</p>
+
+      <h3 style="margin-top: 16px;">Certificates</h3>
+      <ul>
+        <li><span class="crawl-node" data-color-id="2">NxtWave</span>: HTML, CSS, ReactJS, Bootstrap, Node.js, SQLite, Python, JS, Git</li>
+        <li><span class="crawl-node" data-color-id="4">NIELIT</span>: Course on Computer Concepts (CCC)</li>
+        <li><span class="crawl-node" data-color-id="5">SRB Computer Institute</span>: Advance Diploma in Computer & Internet Application (ADCIA)</li>
+      </ul>
+    </div>
+
+    <h2>Contact & Communication</h2>
+    <p>Feel free to reach out directly or send a message through the terminal transmission form below:</p>
+    <ul>
+      <li>Phone: <span class="crawl-node" data-color-id="4">+91 7607765685</span></li>
+      <li>Email: <a class="contact-link" href="mailto:devanantpatel@gmail.com"><span class="crawl-node" data-color-id="1">devanantpatel@gmail.com</span></a></li>
+      <li>GitHub: <a class="contact-link" href="https://github.com/devanantpatel" target="_blank" rel="noreferrer"><span class="crawl-node" data-color-id="2">github.com/devanantpatel</span></a></li>
+    </ul>
+
+    <!-- Working Contact Form -->
+    <div class="card" style="margin-top: 24px;">
+      <h3>// TRANSMIT MESSAGE TO ANANT</h3>
+      <form id="contact-form">
+        <!-- Web3Forms Access Key yahan replace karein -->
+        <input type="hidden" name="access_key" value="763d6bc0-4464-4f87-acd7-a67425113b5b" />
+        <input type="hidden" name="subject" value="New Portfolio Message from Spider Site" />
+        
+        <div class="form-group">
+          <label for="name">NAME / SENDER:</label>
+          <input type="text" id="name" name="name" class="form-control" placeholder="John Doe" required />
+        </div>
+        <div class="form-group">
+          <label for="email">EMAIL ADDRESS:</label>
+          <input type="email" id="email" name="email" class="form-control" placeholder="john@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="message">TRANSMISSION DATA:</label>
+          <textarea id="message" name="message" rows="4" class="form-control" placeholder="Enter your project details or enquiry..." required></textarea>
+        </div>
+        <button type="submit" class="btn-submit" id="submit-btn">// SEND TRANSMISSION</button>
+        <div id="form-msg"></div>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; <span id="year"></span> <span class="highlight">Anant Patel</span>. All Rights Reserved.</p>
+    <p style="font-size: 11px; margin-top: 4px; color: #334155;">Autonomous Spider Crawler Portfolio System</p>
+  </footer>
+    <script>
+    // -------------------------------------------------------------
+    // 1. DYNAMIC COLOR PALETTES (Changes on every reload)
+    // -------------------------------------------------------------
+    const multiPalettes = [
+      { name: 'CYBERPUNK_NEON', spider: '#00f3ff', spiderEye: '#ff007f', glow: 'rgba(0, 243, 255, 0.4)', c1: '#00f3ff', c2: '#ff007f', c3: '#ffe600', c4: '#39ff14', c5: '#bf55ec', c6: '#ff793f' },
+      { name: 'SYNTHWAVE_80S', spider: '#ff007f', spiderEye: '#ffe600', glow: 'rgba(255, 0, 127, 0.4)', c1: '#ff007f', c2: '#00f3ff', c3: '#f9ca24', c4: '#6ab04c', c5: '#e056fd', c6: '#f0932b' },
+      { name: 'MATRIX_HACKER', spider: '#39ff14', spiderEye: '#00f3ff', glow: 'rgba(57, 255, 20, 0.4)', c1: '#39ff14', c2: '#2ed573', c3: '#ffeaa7', c4: '#00d2d3', c5: '#a29bfe', c6: '#ff9ff3' },
+      { name: 'SOLAR_PLASMA', spider: '#ffe600', spiderEye: '#ff0055', glow: 'rgba(255, 230, 0, 0.4)', c1: '#ffe600', c2: '#ff4757', c3: '#ffa502', c4: '#2ed573', c5: '#1e90ff', c6: '#ff6b81' },
+      { name: 'DEEP_AMETHYST', spider: '#bf55ec', spiderEye: '#39ff14', glow: 'rgba(191, 85, 236, 0.4)', c1: '#bf55ec', c2: '#00f3ff', c3: '#f6e58d', c4: '#badc58', c5: '#ff7675', c6: '#70a1ff' }
+    ];
+
+    const selected = multiPalettes[Math.floor(Math.random() * multiPalettes.length)];
+    const root = document.documentElement;
+    root.style.setProperty('--spider-color', selected.spider);
+    root.style.setProperty('--spider-eye', selected.spiderEye);
+    root.style.setProperty('--spider-glow', selected.glow);
+    root.style.setProperty('--color-c1', selected.c1);
+    root.style.setProperty('--color-c2', selected.c2);
+    root.style.setProperty('--color-c3', selected.c3);
+    root.style.setProperty('--color-c4', selected.c4);
+    root.style.setProperty('--color-c5', selected.c5);
+    root.style.setProperty('--color-c6', selected.c6);
+
+    document.getElementById('theme-name').textContent = selected.name;
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // -------------------------------------------------------------
+    // 2. DYNAMIC PROJECTS WITH PAGINATION & GITHUB FETCH
+    // -------------------------------------------------------------
+    let allProjects = [
+      {
+        title: "01. Jobby App — Job Search Web Application",
+        desc: "A responsive job search web application built with ReactJS, reusable components, and a modular multi-route system. Features JWT auth stored in cookies, dynamic REST APIs filtering, and error handling states.",
+        tech: "REACTJS, JS, JWT, REST APIS, CSS",
+        github: "https://github.com/devanantpatel",
+        demo: "https://anant.ccbp.tech"
+      },
+      {
+        title: "02. Match Game — Interactive React Game",
+        desc: "A fast-paced interactive matching game testing user reflex speed and state updates with live score tracking, countdown timers, and conditional rendering states.",
+        tech: "REACTJS, JAVASCRIPT, STATE MANAGEMENT",
+        github: "https://github.com/devanantpatel",
+        demo: "https://anant.ccbp.tech"
+      },
+      {
+        title: "03. MERN Stack API Services",
+        desc: "Scalable backend service built using Node.js, Express.js, and SQLite database with token-based security and standardized RESTful routes.",
+        tech: "NODE.JS, EXPRESS, SQLITE, POSTMAN",
+        github: "https://github.com/devanantpatel",
+        demo: ""
+      },
+      {
+        title: "04. Kinetic UI & Python Automation",
+        desc: "Collection of algorithm-driven scripts and interactive UI tools solving data extraction and workflow automation problems.",
+        tech: "PYTHON, GIT, WEB APIS",
+        github: "https://github.com/devanantpatel",
+        demo: ""
+      }
+    ];
+
+    let currentPage = 1;
+    const perPage = 3;
+
+    async function fetchGitHubProjects() {
+      try {
+        const res = await fetch('https://api.github.com/users/devanantpatel/repos?sort=updated&per_page=15');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const fetched = data.map((repo, i) => ({
+            title: `GH-${i + 1}. ${repo.name.replace(/-/g, ' ').toUpperCase()}`,
+            desc: repo.description || 'Public repository developed with clean code practices and structured documentation.',
+            tech: (repo.language || 'JAVASCRIPT').toUpperCase(),
+            github: repo.html_url,
+            demo: repo.homepage || ''
+          }));
+          // Merge unique projects
+          allProjects = [...allProjects, ...fetched.filter(f => !allProjects.some(a => a.github === f.github))];
+          renderProjects();
+        }
+      } catch (e) {
+        console.log("GitHub API fallback active");
+      }
+    }
+
+    function renderProjects() {
+      const container = document.getElementById('projects-container');
+      const totalPages = Math.ceil(allProjects.length / perPage);
+      currentPage = Math.max(1, Math.min(currentPage, totalPages));
+
+      const start = (currentPage - 1) * perPage;
+      const end = start + perPage;
+      const visible = allProjects.slice(start, end);
+
+      container.innerHTML = visible.map((p, idx) => `
+        <div class="card">
+          <h3>${p.title}</h3>
+          <p>${p.desc}</p>
+          <div class="card-links">
+            <a href="${p.github}" target="_blank" rel="noreferrer">// View Code (GitHub)</a>
+            ${p.demo ? `<a href="${p.demo}" target="_blank" rel="noreferrer">// Live Demo</a>` : ''}
+          </div>
+          <span class="badge">// TECH: ${p.tech}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('page-info').textContent = `PAGE ${currentPage} OF ${totalPages}`;
+      document.getElementById('prev-btn').disabled = currentPage === 1;
+      document.getElementById('next-btn').disabled = currentPage === totalPages;
+    }
+
+    function changePage(direction) {
+      currentPage += direction;
+      renderProjects();
+    }
+
+    renderProjects();
+    fetchGitHubProjects();
+
+    // -------------------------------------------------------------
+    // 3. CONTACT FORM SUBMISSION (Web3Forms API)
+    // -------------------------------------------------------------
+    const contactForm = document.getElementById('contact-form');
+    const formMsg = document.getElementById('form-msg');
+    const submitBtn = document.getElementById('submit-btn');
+
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.textContent = "// TRANSMITTING...";
+      formMsg.textContent = "";
+
+      const formData = new FormData(contactForm);
+      try {
+        const response = await fetch("https://api.web3forms.com/submit", {
+          method: "POST",
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          formMsg.style.color = "var(--color-c4)";
+          formMsg.textContent = "✔ TRANSMISSION RECEIVED! I will reply to you soon.";
+          contactForm.reset();
+        } else {
+          formMsg.style.color = "var(--color-c2)";
+          formMsg.textContent = "⚠ " + (result.message || "Failed to transmit message. Please email directly.");
+        }
+      } catch (err) {
+        formMsg.style.color = "var(--color-c2)";
+        formMsg.textContent = "⚠ Network error! Please email devanantpatel@gmail.com directly.";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "// SEND TRANSMISSION";
+      }
+    });
+
+    // -------------------------------------------------------------
+    // 4. SPIDER CRAWLER ANIMATION ENGINE
+    // -------------------------------------------------------------
+    const canvas = document.getElementById('spider-canvas');
+    const ctx = canvas.getContext('2d');
+    const logStatus = document.getElementById('log-status');
+    const logCounter = document.getElementById('log-counter');
+
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const PADDING = 45;
+    let mouse = { x: width / 2, y: height / 2 };
+    let isUserInteracting = false;
+    let idleTimer = null;
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = Math.max(PADDING, Math.min(width - PADDING, e.clientX));
+      mouse.y = Math.max(PADDING, Math.min(height - PADDING, e.clientY));
+      isUserInteracting = true;
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => { isUserInteracting = false; }, 1500);
+    });
+
+    let crawledCount = 0;
+    let currentTargetNode = null;
+
+    function getVisibleNodes() {
+      const nodes = Array.from(document.querySelectorAll('.crawl-node'));
+      return nodes.filter(node => {
+        const rect = node.getBoundingClientRect();
+        return rect.top >= 45 && rect.bottom <= height - 45 && rect.left >= 0 && rect.right <= width;
+      });
+    }
+
+    function pickTargetNode() {
+      const visible = getVisibleNodes();
+      if (visible.length === 0) return;
+      const unhighlighted = visible.filter(n => !n.dataset.highlighted);
+      const pool = unhighlighted.length > 0 ? unhighlighted : visible;
+      currentTargetNode = pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    setInterval(pickTargetNode, 2800);
+    pickTargetNode();
+
+    const spider = { x: width / 2, y: height / 2, vx: 0, vy: 0, legs: [] };
+    for (let i = 0; i < 8; i++) {
+      const side = i % 2 === 0 ? 1 : -1;
+      const angle = (Math.PI / 4) * Math.floor(i / 2) - Math.PI / 3;
+      spider.legs.push({
+        side: side, angle: angle,
+        tip: { x: spider.x + side * 50, y: spider.y + 50 },
+        idealTip: { x: spider.x + side * 50, y: spider.y + 50 },
+        stepProgress: 1
+      });
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+      let targetX = mouse.x;
+      let targetY = mouse.y;
+
+      if (!isUserInteracting && currentTargetNode) {
+        const rect = currentTargetNode.getBoundingClientRect();
+        if (rect.top >= 0 && rect.bottom <= height) {
+          targetX = rect.left + rect.width / 2;
+          targetY = rect.top + rect.height / 2;
+
+          const dist = Math.hypot(spider.x - targetX, spider.y - targetY);
+          if (dist < 55 && !currentTargetNode.dataset.highlighted) {
+            const colorId = currentTargetNode.dataset.colorId || '1';
+            currentTargetNode.classList.add(`c-${colorId}`);
+            currentTargetNode.dataset.highlighted = 'true';
+            crawledCount++;
+            logCounter.textContent = crawledCount;
+            logStatus.textContent = `INDEXED: ${currentTargetNode.textContent.trim().toUpperCase()}`;
+          }
+        } else {
+          pickTargetNode();
+        }
+      }
+
+      targetX = Math.max(PADDING, Math.min(width - PADDING, targetX));
+      targetY = Math.max(PADDING + 20, Math.min(height - PADDING, targetY));
+
+      spider.vx += (targetX - spider.x) * 0.007;
+      spider.vy += (targetY - spider.y) * 0.007;
+      spider.vx *= 0.86;
+      spider.vy *= 0.86;
+      spider.x += spider.vx;
+      spider.y += spider.vy;
+
+      spider.x = Math.max(PADDING, Math.min(width - PADDING, spider.x));
+      spider.y = Math.max(PADDING + 20, Math.min(height - PADDING, spider.y));
+
+      ctx.beginPath();
+      ctx.strokeStyle = selected.glow;
+      ctx.setLineDash([3, 4]);
+      ctx.moveTo(spider.x, spider.y);
+      ctx.lineTo(targetX, targetY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      spider.legs.forEach((leg, index) => {
+        const sideOffset = leg.side * 20;
+        const rootX = spider.x + sideOffset;
+        const rootY = spider.y + (Math.floor(index / 2) - 1.5) * 8;
+
+        const reachX = rootX + leg.side * 58 + Math.sin(leg.angle) * 30 + spider.vx * 10;
+        const reachY = rootY + Math.cos(leg.angle) * 38 + spider.vy * 10;
+
+        const footDist = Math.hypot(reachX - leg.tip.x, reachY - leg.tip.y);
+        if (footDist > 48 && leg.stepProgress >= 1) {
+          leg.stepProgress = 0;
+          leg.idealTip = {
+            x: Math.max(8, Math.min(width - 8, reachX)),
+            y: Math.max(8, Math.min(height - 8, reachY))
+          };
+        }
+
+        if (leg.stepProgress < 1) {
+          leg.stepProgress += 0.22;
+          leg.tip.x += (leg.idealTip.x - leg.tip.x) * 0.35;
+          leg.tip.y += (leg.idealTip.y - leg.tip.y) * 0.35;
+        }
+
+        const midX = (rootX + leg.tip.x) / 2 + leg.side * 18;
+        const midY = (rootY + leg.tip.y) / 2 - 20;
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1.8;
+        ctx.moveTo(rootX, rootY);
+        ctx.lineTo(midX, midY);
+        ctx.lineTo(leg.tip.x, leg.tip.y);
+        ctx.stroke();
+
+        ctx.fillStyle = selected.spider;
+        ctx.beginPath();
+        ctx.arc(leg.tip.x, leg.tip.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.save();
+      ctx.translate(spider.x, spider.y);
+
+      ctx.strokeStyle = selected.spider;
+      ctx.fillStyle = '#0a0f1d';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.ellipse(0, 7, 10, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, -8, 7.5, 0, Math.PI * 2);
+      ctx.fillStyle = selected.spider;
+      ctx.fill();
+
+      ctx.fillStyle = selected.spiderEye;
+      ctx.fillRect(-3, -10, 2, 2);
+      ctx.fillRect(1, -10, 2, 2);
+      ctx.restore();
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
+
+  
