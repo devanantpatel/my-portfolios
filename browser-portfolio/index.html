@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AnantWeb - Google Search Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --os-bg: #0d0f17;
+      --browser-bg: #202124;
+      --tab-bg: #18191c;
+      --tab-active: #202124;
+      --address-bar-bg: #303134;
+      --border-color: rgba(255, 255, 255, 0.1);
+      --text: #e8eaed;
+      --text-muted: #9aa0a6;
+      --google-blue: #8ab4f8;
+      --google-blue-raw: #4285f4;
+      --google-red: #ea4335;
+      --google-yellow: #fbbc05;
+      --google-green: #34a853;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--os-bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 8px;
+    }
+
+    .browser-window {
+      width: 100%;
+      max-width: 960px;
+      min-height: 92vh;
+      height: 92vh;
+      background: var(--browser-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Tab Strip */
+    .tab-strip {
+      background: var(--tab-bg);
+      display: flex;
+      align-items: center;
+      padding: 8px 12px 0 12px;
+      gap: 6px;
+      overflow-x: auto;
+      user-select: none;
+    }
+    .tab-strip::-webkit-scrollbar { display: none; }
+
+    .tabs-container {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+      overflow-x: auto;
+    }
+    .tabs-container::-webkit-scrollbar { display: none; }
+
+    .tab {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 8px 8px 0 0;
+      font-size: 0.78rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .tab:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    .tab.active { background: var(--browser-bg); color: #fff; font-weight: 500; }
+
+    /* Top Toolbar */
+    .toolbar {
+      background: var(--browser-bg);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: nowrap;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+    .omnibox {
+      flex: 1;
+      min-width: 0;
+      background: var(--address-bar-bg);
+      border-radius: 20px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+    }
+    .omnibox input {
+      flex: 1;
+      min-width: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 0.8rem;
+    }
+
+    /* Bookmarks Bar */
+    .bookmarks-bar {
+      background: var(--browser-bg);
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-color);
+      overflow-x: auto;
+      font-size: 0.74rem;
+      white-space: nowrap;
+    }
+    .bookmarks-bar::-webkit-scrollbar { display: none; }
+
+    .bookmark-label {
+      color: var(--google-yellow);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding-right: 4px;
+      border-right: 1px solid var(--border-color);
+      font-size: 0.76rem;
+    }
+
+    .bookmark-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 3px 6px;
+      border-radius: 4px;
+    }
+    .bookmark-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+    /* Web Viewport */
+    .web-viewport {
+      flex: 1;
+      background: #202124;
+      overflow-y: auto;
+      padding: 16px 16px 36px 16px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .web-viewport::-webkit-scrollbar { width: 5px; }
+    .web-viewport::-webkit-scrollbar-thumb { background: #3c4043; border-radius: 4px; }
+
+    /* Home View */
+    .home-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 18px 0;
+      text-align: center;
+    }
+
+    .brand-logo {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 3.4rem;
+      font-weight: 800;
+      letter-spacing: -1.2px;
+      margin-bottom: 22px;
+      user-select: none;
+    }
+    .c-blue { color: var(--google-blue-raw); }
+    .c-red { color: var(--google-red); }
+    .c-yellow { color: var(--google-yellow); }
+    .c-green { color: var(--google-green); }
+
+    /* Search Container Common */
+    .search-container {
+      width: 100%;
+      max-width: 580px;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .search-box-wrapper {
+      width: 100%;
+      background: #303134;
+      border: 1px solid transparent;
+      border-radius: 26px;
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
+    .search-box-wrapper:hover, .search-box-wrapper:focus-within {
+      background: #303134;
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+    }
+    .search-box-wrapper.has-suggestions {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .main-search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 0.96rem;
+      padding-left: 4px;
+    }
+
+    .search-tools-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+
+    .clear-icon {
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      display: none;
+    }
+
+    .search-action-icon {
+      color: var(--google-blue);
+      cursor: pointer;
+      font-size: 1.05rem;
+      transition: transform 0.15s;
+    }
+    .search-action-icon:hover { transform: scale(1.1); }
+
+    /* Dropdown Suggestions */
+    .suggestions-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      background: #303134;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+      display: none;
+      z-index: 20;
+      overflow: hidden;
+      text-align: left;
+    }
+    .suggestion-item {
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text);
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .suggestion-item:hover { background: #3c4043; }
+    .suggestion-item span.s-icon { color: var(--text-muted); font-size: 0.85rem; }
+
+    .search-actions { display: flex; gap: 10px; margin-bottom: 24px; }
+    .search-btn {
+      background: #303134;
+      border: 1px solid transparent;
+      color: #e8eaed;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      cursor: pointer;
+    }
+    .search-btn:hover { border-color: rgba(255, 255, 255, 0.2); background: #3c4043; }
+
+    .shortcuts-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+      max-width: 580px;
+    }
+    .shortcut-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: 80px;
+      padding: 8px 4px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .shortcut-card:hover { background: rgba(255,255,255,0.06); }
+    .shortcut-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #303134;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+    .shortcut-label { font-size: 0.72rem; color: var(--text-muted); text-align: center; }
+
+    /* Results View */
+    .results-view {
+      display: none;
+      max-width: 680px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .google-search-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+
+    .mini-google-logo {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .user-profile-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1a73e8, #8ab4f8);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border: 2px solid #303134;
+      cursor: pointer;
+    }
+
+    .result-search-container {
+      width: 100%;
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .result-search-box {
+      width: 100%;
+      background: #303134;
+      border-radius: 26px;
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      gap: 10px;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .result-search-box:hover, .result-search-box:focus-within {
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .result-search-box.has-suggestions {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .result-search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+
+    .result-actions-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .result-clear-icon {
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.05rem;
+      padding: 0 2px;
+      display: none;
+    }
+
+    .result-search-icon {
+      color: var(--google-blue);
+      cursor: pointer;
+      font-size: 1.05rem;
+      padding: 0 2px;
+      transition: transform 0.15s;
+    }
+    .result-search-icon:hover { transform: scale(1.1); }
+
+    .filter-tabs-row {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+    }
+    .filter-tabs-row::-webkit-scrollbar { display: none; }
+    .filter-tab {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      padding-bottom: 6px;
+      position: relative;
+    }
+    .filter-tab.active {
+      color: #fff;
+      font-weight: 600;
+    }
+    .filter-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--google-blue);
+      border-radius: 2px;
+    }
+
+    .organic-item {
+      margin-bottom: 22px;
+      padding-bottom: 6px;
+    }
+    .org-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+    .org-link {
+      font-size: 1.16rem;
+      color: var(--google-blue);
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 4px;
+      line-height: 1.35;
+    }
+    .org-link:hover { text-decoration: underline; }
+    .org-snippet {
+      font-size: 0.88rem;
+      color: #bdc1c6;
+      line-height: 1.55;
+    }
+
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .web-card {
+      background: #282a2d;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    /* Form Styles */
+    .contact-form-card {
+      background: #282a2d;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 18px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .form-input, .form-textarea {
+      width: 100%;
+      background: #1e1f23;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-textarea:focus {
+      border-color: var(--google-blue);
+    }
+    .form-textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+    .form-submit-btn {
+      background: var(--google-blue-raw);
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.2s;
+    }
+    .form-submit-btn:hover { opacity: 0.9; }
+
+    .form-status-msg {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      display: none;
+    }
+
+    .pill-badge {
+      display: inline-block;
+      background: rgba(138, 180, 248, 0.12);
+      color: var(--google-blue);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      margin: 3px;
+    }
+
+    .status-bar {
+      background: var(--browser-bg);
+      border-top: 1px solid var(--border-color);
+      padding: 6px 14px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 4px; }
+      .browser-window { min-height: 96vh; height: 96vh; border-radius: 8px; }
+      .brand-logo { font-size: 2.6rem; }
+      .web-viewport { padding: 14px 12px 30px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="browser-window">
+    
+    <!-- Tab Strip -->
+    <div class="tab-strip">
+      <div class="tabs-container">
+        <div class="tab active" id="tab-home" onclick="openHomeTab()">
+          <span>🏠</span>
+          <span>Home</span>
+        </div>
+        <div class="tab" id="tab-about" onclick="switchTab('about')">
+          <span>👤</span>
+          <span>About</span>
+        </div>
+        <div class="tab" id="tab-projects" onclick="switchTab('projects')">
+          <span>🚀</span>
+          <span>Projects</span>
+        </div>
+        <div class="tab" id="tab-skills" onclick="switchTab('skills')">
+          <span>⚡</span>
+          <span>Skills</span>
+        </div>
+        <div class="tab" id="tab-contact" onclick="switchTab('contact')">
+          <span>📞</span>
+          <span>Contact</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation & Omnibox Bar -->
+    <div class="toolbar">
+      <div class="nav-actions">
+        <button class="nav-btn" onclick="goBack()" title="Back">&#8592;</button>
+        <button class="nav-btn" onclick="goForward()" title="Forward">&#8594;</button>
+        <button class="nav-btn" onclick="reloadPage()" title="Reload">&#8635;</button>
+        <button class="nav-btn" onclick="openHomeTab()" title="Home">&#8962;</button>
+      </div>
+
+      <div class="omnibox">
+        <span style="color: #34a853; font-size: 0.75rem;">🔒</span>
+        <input type="text" id="address-input" value="https://google.com" onkeydown="handleOmniboxEnter(event)" />
+      </div>
+    </div>
+
+    <!-- Bookmarks Toolbar -->
+    <div class="bookmarks-bar">
+      <span class="bookmark-label">⭐ Bookmarks:</span>
+      <a href="https://anant-spider-portfolio.netlify.app" target="_blank" class="bookmark-item">🕷 Spider Crawler</a>
+      <a href="https://anant-terminal-portfolio.netlify.app" target="_blank" class="bookmark-item">💻 Terminal CLI</a>
+      <a href="https://anant-3d-portfolio.netlify.app" target="_blank" class="bookmark-item">🃏 3D Cyber Deck</a>
+      <a href="https://github.com/devanantpatel/my-portfolios" target="_blank" class="bookmark-item">📂 Git Portfolios</a>
+    </div>
+
+    <!-- Main Viewport -->
+    <main class="web-viewport" id="viewport">
+      
+      <!-- 1. GOOGLE SEARCH HOME (AnantWeb) -->
+      <section class="home-view" id="page-home">
+        
+        <div class="brand-logo">
+          <span class="c-blue">A</span><span class="c-red">n</span><span class="c-yellow">a</span><span class="c-blue">n</span><span class="c-green">t</span><span class="c-red">Web</span>
+        </div>
+
+        <!-- Search Box (Home) -->
+        <div class="search-container">
+          <div class="search-box-wrapper" id="search-box-wrapper">
+            <input type="text" class="main-search-input" id="home-search-input" placeholder="Search Google or type a URL" onfocus="onSearchFocus('home')" oninput="onSearchInput(this.value, 'home')" onkeydown="handleSearchInput(event, 'home')" autocomplete="off" />
+            
+            <div class="search-tools-right">
+              <span class="clear-icon" id="clear-home-btn" onclick="clearSearch('home')">✕</span>
+              <span class="search-action-icon" onclick="triggerSearch('home')" title="Search">🔍</span>
+            </div>
+          </div>
+
+          <!-- Suggestions Dropdown (Home) -->
+          <div class="suggestions-dropdown" id="suggestions-box-home"></div>
+        </div>
+
+        <div class="search-actions">
+          <button class="search-btn" onclick="triggerSearch('home')">Google Search</button>
+          <button class="search-btn" onclick="feelingLucky()">I'm Feeling Lucky</button>
+        </div>
+
+        <!-- Speed Dial Shortcuts -->
+        <div class="shortcuts-grid">
+          <div class="shortcut-card" onclick="switchTab('about')">
+            <div class="shortcut-circle">👤</div>
+            <div class="shortcut-label">About</div>
+          </div>
+          <div class="shortcut-card" onclick="switchTab('projects')">
+            <div class="shortcut-circle">🚀</div>
+            <div class="shortcut-label">Project</div>
+          </div>
+          <div class="shortcut-card" onclick="switchTab('contact')">
+            <div class="shortcut-circle">📞</div>
+            <div class="shortcut-label">Context</div>
+          </div>
+          <a href="https://github.com/devanantpatel" target="_blank" class="shortcut-card">
+            <div class="shortcut-circle">📂</div>
+            <div class="shortcut-label">GitHub</div>
+          </a>
+          <a href="https://github.com/devanantpatel/my-portfolios" target="_blank" class="shortcut-card">
+            <div class="shortcut-circle">⚡</div>
+            <div class="shortcut-label">Git Project</div>
+          </a>
+        </div>
+
+      </section>
+
+      <!-- 2. REAL GOOGLE SEARCH RESULTS VIEW -->
+      <section class="results-view" id="page-search-results">
+        
+        <!-- Header: Logo + Profile -->
+        <div class="google-search-header">
+          <div class="mini-google-logo" onclick="openHomeTab()">
+            <span class="c-blue">G</span><span class="c-red">o</span><span class="c-yellow">o</span><span class="c-blue">g</span><span class="c-green">l</span><span class="c-red">e</span>
+          </div>
+          <div class="user-profile-avatar" title="Anant Patel">A</div>
+        </div>
+
+        <!-- Results Search Bar -->
+        <div class="result-search-container">
+          <div class="result-search-box" id="result-search-box">
+            <input type="text" id="result-query-input" placeholder="Search Google..." onfocus="onSearchFocus('result')" oninput="onSearchInput(this.value, 'result')" onkeydown="handleSearchInput(event, 'result')" autocomplete="off" />
+            
+            <div class="result-actions-right">
+              <span class="result-clear-icon" id="clear-result-btn" onclick="clearSearch('result')" title="Clear">✕</span>
+              <span class="result-search-icon" onclick="triggerSearch('result')" title="Search">🔍</span>
+            </div>
+          </div>
+
+          <!-- Suggestions Dropdown (Results Page) -->
+          <div class="suggestions-dropdown" id="suggestions-box-result"></div>
+        </div>
+
+        <!-- Filter Row -->
+        <div class="filter-tabs-row">
+          <div class="filter-tab active">All</div>
+          <div class="filter-tab">Images</div>
+          <div class="filter-tab">Videos</div>
+          <div class="filter-tab">Shopping</div>
+          <div class="filter-tab">News</div>
+        </div>
+
+        <!-- Dynamic Intent-Based Organic Results -->
+        <div id="organic-results-container"></div>
+      </section>
+
+      <!-- 3. ABOUT PAGE -->
+      <section class="page-section" id="page-about">
+        <h2 style="font-size: 1.5rem; margin-bottom: 6px;">About Anant Patel</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Full-Stack Web Developer (MERN) & Creative UI Engineer.</p>
+        
+        <div class="card-grid">
+          <div class="web-card">
+            <h3 style="margin-bottom: 8px;">Engineering Philosophy</h3>
+            <p style="color: #cbd5e1; font-size: 0.88rem; line-height: 1.6;">
+              Passionate about pushing standard web limits through procedural simulations, responsive browser mechanics, and scalable backends.
+            </p>
+          </div>
+          <div class="web-card">
+            <h3 style="margin-bottom: 8px;">Core Experience</h3>
+            <p style="color: #cbd5e1; font-size: 0.88rem; line-height: 1.6;">
+              Engineered Inverse Kinematics engines, interactive Unix shells, and 3D gyroscopic cards deployed on Netlify Edge networks.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. PROJECTS PAGE -->
+      <section class="page-section" id="page-projects">
+        <h2 style="font-size: 1.5rem; margin-bottom: 6px;">Production Builds & Live Demos</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">All websites independently deployed via Netlify Edge.</p>
+
+        <div class="card-grid">
+          <div class="web-card">
+            <h3 style="margin-bottom: 6px;">🕷️ Spider Crawler Portfolio</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 14px;">Canvas-based Inverse Kinematics engine navigating DOM surfaces with dynamic procedural tracking.</p>
+            <a href="https://anant-spider-portfolio.netlify.app" target="_blank" style="color: var(--google-blue); font-size: 0.85rem;">Open Live Demo ↗</a>
+          </div>
+
+          <div class="web-card">
+            <h3 style="margin-bottom: 6px;">💻 Developer Terminal (CLI)</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 14px;">Full Unix/Zsh console simulator with matrix digital rain, themes, and keydown navigation.</p>
+            <a href="https://anant-terminal-portfolio.netlify.app" target="_blank" style="color: var(--google-blue); font-size: 0.85rem;">Open Terminal ↗</a>
+          </div>
+
+          <div class="web-card">
+            <h3 style="margin-bottom: 6px;">🃏 3D Cyber Deck</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 14px;">Interactive 3D gyroscopic tilt cards with radial sheen glare effects and HUD carousel.</p>
+            <a href="https://anant-3d-portfolio.netlify.app" target="_blank" style="color: var(--google-blue); font-size: 0.85rem;">Open 3D Deck ↗</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. SKILLS PAGE -->
+      <section class="page-section" id="page-skills">
+        <h2 style="font-size: 1.5rem; margin-bottom: 6px;">Technical Stack & Toolchain</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Core technologies powering full-stack architectures.</p>
+        <div class="card-grid">
+          <div class="web-card">
+            <h3 style="margin-bottom: 10px;">Frontend</h3>
+            <span class="pill-badge">React.js</span>
+            <span class="pill-badge">JavaScript (ES6+)</span>
+            <span class="pill-badge">HTML5 Canvas</span>
+            <span class="pill-badge">Tailwind CSS</span>
+            <span class="pill-badge">CSS3</span>
+          </div>
+          <div class="web-card">
+            <h3 style="margin-bottom: 10px;">Backend & Database</h3>
+            <span class="pill-badge">Node.js</span>
+            <span class="pill-badge">Express.js</span>
+            <span class="pill-badge">MongoDB</span>
+            <span class="pill-badge">REST APIs</span>
+          </div>
+          <div class="web-card">
+            <h3 style="margin-bottom: 10px;">DevOps & Workflow</h3>
+            <span class="pill-badge">Git & GitHub</span>
+            <span class="pill-badge">Netlify</span>
+            <span class="pill-badge">Postman</span>
+            <span class="pill-badge">Linux/Bash</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. CONTACT PAGE WITH CONNECTED ACCESS KEY -->
+      <section class="page-section" id="page-contact">
+        <h2 style="font-size: 1.5rem; margin-bottom: 6px;">Contact Coordinates</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">Direct communication channels and enquiry form.</p>
+        
+        <!-- Contact Information Cards -->
+        <div class="card-grid">
+          <div class="web-card">
+            <div style="font-size: 0.8rem; color: var(--text-muted);">PHONE / WHATSAPP</div>
+            <a href="tel:+917607765685" style="color: #fff; font-size: 1.1rem; font-weight: 600; text-decoration: none; display: block; margin-top: 6px;">+91 76077 65685</a>
+          </div>
+          <div class="web-card">
+            <div style="font-size: 0.8rem; color: var(--text-muted);">DIRECT EMAIL</div>
+            <a href="mailto:devanantpatel@gmail.com" style="color: #fff; font-size: 1.05rem; font-weight: 600; text-decoration: none; display: block; margin-top: 6px;">devanantpatel@gmail.com</a>
+          </div>
+          <div class="web-card">
+            <div style="font-size: 0.8rem; color: var(--text-muted);">CODE REPOSITORY</div>
+            <a href="https://github.com/devanantpatel" target="_blank" style="color: #fff; font-size: 1.05rem; font-weight: 600; text-decoration: none; display: block; margin-top: 6px;">github.com/devanantpatel</a>
+          </div>
+        </div>
+
+        <!-- Interactive Direct Message Form -->
+        <div class="contact-form-card">
+          <h3 style="margin-bottom: 14px; font-size: 1.1rem; color: #fff;">Send Direct Message</h3>
+          
+          <form id="contact-form" onsubmit="handleFormSubmit(event)">
+            <!-- Connected Access Key -->
+            <input type="hidden" name="access_key" value="763d6bc0-4464-4f87-acd7-a67425113b5b" />
+            <input type="hidden" name="subject" value="New Message from AnantWeb Browser Portfolio" />
+            <input type="hidden" name="from_name" value="AnantWeb Portfolio" />
+
+            <div class="form-group">
+              <label class="form-label">YOUR NAME</label>
+              <input type="text" name="name" id="contact-name" class="form-input" placeholder="e.g. John Doe" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">EMAIL ADDRESS</label>
+              <input type="email" name="email" id="contact-email" class="form-input" placeholder="e.g. john@example.com" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">MESSAGE</label>
+              <textarea name="message" id="contact-msg" class="form-textarea" placeholder="Write your message or project query here..." required></textarea>
+            </div>
+
+            <button type="submit" class="form-submit-btn" id="submit-btn">
+              <span>Send Message</span>
+              <span>➔</span>
+            </button>
+            
+            <div class="form-status-msg" id="form-status"></div>
+          </form>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Browser Status Bar -->
+    <footer class="status-bar">
+      <div>Status: 200 OK &bull; Chrome Sandbox Active</div>
+      <div>&copy; <span id="year-label"></span> Anant Patel</div>
+    </footer>
+
+  </div>
+    <script>
+    document.getElementById('year-label').textContent = new Date().getFullYear();
+
+    const addressInput = document.getElementById('address-input');
+    const homeSearchInput = document.getElementById('home-search-input');
+    const resultQueryInput = document.getElementById('result-query-input');
+    const viewport = document.getElementById('viewport');
+
+    let historyStack = ['home'];
+    let historyPointer = 0;
+
+    // Suggestions List (Updated: Anant Patel - about me)
+    const SUGGESTIONS = [
+      'Anant Patel - about me',
+      'projects',
+      'skills & tech stack',
+      'contact',
+      'github devanantpatel',
+      'spider crawler inverse kinematics',
+      'developer terminal cli',
+      '3d cyber deck portfolio'
+    ];
+
+    function hideAllPages() {
+      document.getElementById('page-home').style.display = 'none';
+      document.getElementById('page-search-results').style.display = 'none';
+      document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    }
+
+    function openHomeTab(updateHistory = true) {
+      hideAllPages();
+      document.getElementById('page-home').style.display = 'flex';
+      document.getElementById('tab-home').classList.add('active');
+      addressInput.value = 'https://google.com';
+      if (updateHistory) pushHistory('home');
+      closeAllSuggestions();
+      homeSearchInput.focus();
+    }
+
+    function switchTab(tabKey, updateHistory = true) {
+      hideAllPages();
+      const page = document.getElementById(`page-${tabKey}`);
+      if (page) page.classList.add('active');
+      
+      const tab = document.getElementById(`tab-${tabKey}`);
+      if (tab) tab.classList.add('active');
+
+      addressInput.value = `https://anant.dev/${tabKey}`;
+      viewport.scrollTop = 0;
+
+      if (updateHistory) pushHistory(tabKey);
+    }
+
+    function pushHistory(page) {
+      if (historyStack[historyPointer] !== page) {
+        historyStack = historyStack.slice(0, historyPointer + 1);
+        historyStack.push(page);
+        historyPointer = historyStack.length - 1;
+      }
+    }
+
+    function goBack() {
+      if (historyPointer > 0) {
+        historyPointer--;
+        loadHistory(historyStack[historyPointer]);
+      }
+    }
+
+    function goForward() {
+      if (historyPointer < historyStack.length - 1) {
+        historyPointer++;
+        loadHistory(historyStack[historyPointer]);
+      }
+    }
+
+    function loadHistory(state) {
+      if (state === 'home') openHomeTab(false);
+      else if (state.startsWith('search:')) executeSearchQuery(state.replace('search:', ''), false);
+      else switchTab(state, false);
+    }
+
+    function reloadPage() {
+      viewport.style.opacity = '0.3';
+      setTimeout(() => viewport.style.opacity = '1', 180);
+    }
+
+    function onSearchFocus(target) {
+      const input = target === 'home' ? homeSearchInput : resultQueryInput;
+      const query = input.value.trim().toLowerCase();
+      renderSuggestions(query, target);
+    }
+
+    function onSearchInput(val, target) {
+      const clearBtn = target === 'home' ? document.getElementById('clear-home-btn') : document.getElementById('clear-result-btn');
+      clearBtn.style.display = val.trim() ? 'block' : 'none';
+      renderSuggestions(val.trim().toLowerCase(), target);
+    }
+
+    function renderSuggestions(query, target) {
+      const box = target === 'home' ? document.getElementById('suggestions-box-home') : document.getElementById('suggestions-box-result');
+      const wrapper = target === 'home' ? document.getElementById('search-box-wrapper') : document.getElementById('result-search-box');
+
+      let list = SUGGESTIONS;
+      if (query) {
+        list = SUGGESTIONS.filter(item => item.toLowerCase().includes(query));
+      }
+
+      if (list.length > 0) {
+        box.innerHTML = list.slice(0, 5).map(m => `
+          <div class="suggestion-item" onmousedown="selectSuggestion('${m}', '${target}')">
+            <span class="s-icon">🔍</span>
+            <span>${query ? highlightMatch(m, query) : m}</span>
+          </div>
+        `).join('');
+        box.style.display = 'block';
+        wrapper.classList.add('has-suggestions');
+      } else {
+        box.style.display = 'none';
+        wrapper.classList.remove('has-suggestions');
+      }
+    }
+
+    function highlightMatch(text, query) {
+      const idx = text.toLowerCase().indexOf(query);
+      if (idx === -1) return text;
+      return text.substring(0, idx) + '<b>' + text.substring(idx, idx + query.length) + '</b>' + text.substring(idx + query.length);
+    }
+
+    function closeAllSuggestions() {
+      ['home', 'result'].forEach(t => {
+        const box = document.getElementById(`suggestions-box-${t}`);
+        const wrapper = t === 'home' ? document.getElementById('search-box-wrapper') : document.getElementById('result-search-box');
+        if (box) box.style.display = 'none';
+        if (wrapper) wrapper.classList.remove('has-suggestions');
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      const homeWrap = document.getElementById('search-box-wrapper');
+      const resultWrap = document.getElementById('result-search-box');
+      if (homeWrap && !homeWrap.contains(e.target) && resultWrap && !resultWrap.contains(e.target)) {
+        closeAllSuggestions();
+      }
+    });
+
+    function selectSuggestion(val, target) {
+      if (target === 'home') homeSearchInput.value = val;
+      else resultQueryInput.value = val;
+
+      closeAllSuggestions();
+      executeSearchQuery(val);
+    }
+
+    function clearSearch(target) {
+      if (target === 'home') {
+        homeSearchInput.value = '';
+        document.getElementById('clear-home-btn').style.display = 'none';
+        renderSuggestions('', 'home');
+        homeSearchInput.focus();
+      } else {
+        resultQueryInput.value = '';
+        document.getElementById('clear-result-btn').style.display = 'none';
+        renderSuggestions('', 'result');
+        resultQueryInput.focus();
+      }
+    }
+
+    function handleSearchInput(e, target) {
+      if (e.key === 'Enter') {
+        closeAllSuggestions();
+        triggerSearch(target);
+      }
+    }
+
+    function triggerSearch(target) {
+      const input = target === 'home' ? homeSearchInput : resultQueryInput;
+      const query = input.value.trim();
+      if (!query) return;
+      closeAllSuggestions();
+      executeSearchQuery(query);
+    }
+
+    // Dynamic Intent Search Execution
+    function executeSearchQuery(query, updateHistory = true) {
+      const lower = query.toLowerCase().trim();
+      if (!lower) return;
+
+      hideAllPages();
+      document.getElementById('page-search-results').style.display = 'block';
+      resultQueryInput.value = query;
+      document.getElementById('clear-result-btn').style.display = 'block';
+      addressInput.value = `https://google.com/search?q=${encodeURIComponent(query)}`;
+
+      const allResults = [
+        {
+          key: 'contact',
+          url: "https://anant.dev/contact",
+          title: "Contact Coordinates & Hiring Transmission — Anant Patel",
+          desc: "Connect directly with Anant Patel for full-stack opportunities. Phone/WhatsApp: +91 76077 65685, Email: devanantpatel@gmail.com, GitHub: @devanantpatel."
+        },
+        {
+          key: 'about',
+          url: "https://anant.dev/about",
+          title: "About Anant Patel — Full-Stack Developer Profile",
+          desc: "Official developer profile of Anant Patel. Specializing in MERN stack, Canvas Inverse Kinematics, responsive UI frameworks, and scalable cloud architectures."
+        },
+        {
+          key: 'projects',
+          url: "https://anant.dev/projects",
+          title: "Projects & Production Builds — Anant Patel",
+          desc: "Full portfolio catalog featuring Autonomous Spider Crawler (Inverse Kinematics), Interactive Unix/Zsh Terminal, and 3D Gyroscopic Cyber Deck."
+        },
+        {
+          key: 'skills',
+          url: "https://anant.dev/skills",
+          title: "Technical Stack & Competencies — Anant Patel",
+          desc: "Core technologies: React.js, Node.js, Express.js, MongoDB, JavaScript ES6+, HTML5 Canvas, Git, Linux, and Edge Netlify Deployment."
+        },
+        {
+          key: 'github',
+          url: "https://github.com/devanantpatel/my-portfolios",
+          title: "devanantpatel/my-portfolios — Centralized Monorepo Hub",
+          desc: "Modular GitHub repository orchestrating independent Netlify deployments. Open source code, procedural simulations, and architectural documentation."
+        }
+      ];
+
+      let sortedResults = [...allResults];
+      if (lower.includes('contact') || lower.includes('phone') || lower.includes('email') || lower.includes('cont')) {
+        sortedResults.sort((a, b) => (a.key === 'contact' ? -1 : b.key === 'contact' ? 1 : 0));
+      } else if (lower.includes('about') || lower.includes('anant') || lower.includes('bio') || lower.includes('who')) {
+        sortedResults.sort((a, b) => (a.key === 'about' ? -1 : b.key === 'about' ? 1 : 0));
+      } else if (lower.includes('project') || lower.includes('spider') || lower.includes('terminal') || lower.includes('3d')) {
+        sortedResults.sort((a, b) => (a.key === 'projects' ? -1 : b.key === 'projects' ? 1 : 0));
+      } else if (lower.includes('skill') || lower.includes('tech') || lower.includes('stack')) {
+        sortedResults.sort((a, b) => (a.key === 'skills' ? -1 : b.key === 'skills' ? 1 : 0));
+      } else if (lower.includes('git')) {
+        sortedResults.sort((a, b) => (a.key === 'github' ? -1 : b.key === 'github' ? 1 : 0));
+      }
+
+      const container = document.getElementById('organic-results-container');
+      container.innerHTML = sortedResults.map(r => `
+        <div class="organic-item">
+          <div class="org-header">
+            <span>🌐</span>
+            <span>${r.url}</span>
+          </div>
+          <a href="javascript:void(0)" class="org-link" onclick="handleOrgLink('${r.url}')">${r.title}</a>
+          <div class="org-snippet">${r.desc}</div>
+        </div>
+      `).join('');
+
+      viewport.scrollTop = 0;
+      if (updateHistory) pushHistory('search:' + query);
+    }
+
+    function handleOrgLink(url) {
+      if (url.includes('about')) switchTab('about');
+      else if (url.includes('projects')) switchTab('projects');
+      else if (url.includes('skills')) switchTab('skills');
+      else if (url.includes('contact')) switchTab('contact');
+      else window.open('https://github.com/devanantpatel/my-portfolios', '_blank');
+    }
+
+    function handleOmniboxEnter(e) {
+      if (e.key === 'Enter') {
+        const val = addressInput.value.toLowerCase().trim();
+        if (val.includes('about')) switchTab('about');
+        else if (val.includes('project')) switchTab('projects');
+        else if (val.includes('skill')) switchTab('skills');
+        else if (val.includes('contact')) switchTab('contact');
+        else {
+          executeSearchQuery(val.replace('https://', '').replace('.com', ''));
+        }
+      }
+    }
+
+    function feelingLucky() {
+      homeSearchInput.value = 'projects';
+      triggerSearch('home');
+    }
+
+    // REAL WEB3FORMS DISPATCH ENGINE
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      const form = document.getElementById('contact-form');
+      const btn = document.getElementById('submit-btn');
+      const status = document.getElementById('form-status');
+
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      btn.innerHTML = '<span>Transmitting...</span>';
+      status.style.display = 'none';
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          status.style.display = 'block';
+          status.style.color = '#34a853';
+          status.innerHTML = '✓ Message received! I will review your transmission shortly.';
+          form.reset();
+        } else {
+          status.style.display = 'block';
+          status.style.color = '#ea4335';
+          status.innerHTML = '✕ Note: Form submission error. Please try again.';
+        }
+      } catch (err) {
+        status.style.display = 'block';
+        status.style.color = '#ea4335';
+        status.innerHTML = '✕ Network error. Please email directly to devanantpatel@gmail.com.';
+      } finally {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.innerHTML = '<span>Send Message</span><span>➔</span>';
+      }
+    }
+  </script>
+</body>
+</html>
