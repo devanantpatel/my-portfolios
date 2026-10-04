@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Anant Patel | 3D Cyber Deck Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #05070d;
+      --card-bg: rgba(13, 17, 28, 0.75);
+      --neon-cyan: #00f0ff;
+      --neon-pink: #ff0055;
+      --neon-purple: #7928ca;
+      --neon-green: #00ff88;
+      --text: #e2e8f0;
+      --text-muted: #8492a6;
+      --border: rgba(0, 240, 255, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 14px;
+      overflow-x: hidden;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      position: relative;
+    }
+
+    /* Futuristic Cyber Grid & Radial Glow */
+    .cyber-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: 
+        radial-gradient(circle at 50% 20%, rgba(0, 240, 255, 0.12), transparent 45%),
+        radial-gradient(circle at 80% 80%, rgba(121, 40, 202, 0.15), transparent 50%),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Ambient HUD Header */
+    .hud-header {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 10px 18px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(10, 14, 24, 0.6);
+      backdrop-filter: blur(12px);
+      z-index: 2;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+    }
+
+    .hud-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--neon-cyan);
+    }
+
+    .hud-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--neon-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--neon-cyan);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    /* 3D Viewport & Perspective Container */
+    .deck-viewport {
+      perspective: 1200px;
+      width: 100%;
+      max-width: 520px;
+      min-height: 480px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* The Interactive 3D Card */
+    .card-3d {
+      width: 100%;
+      height: 100%;
+      min-height: 460px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.12);
+      transform-style: preserve-3d;
+      transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    /* Light Glare Overlay on 3D Tilt */
+    .glare {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      transform: translateZ(1px);
+    }
+
+    /* Holographic Cyber Accents */
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 1.5px;
+      color: var(--neon-cyan);
+      transform: translateZ(25px);
+    }
+
+    .badge-protocol {
+      border: 1px solid var(--neon-cyan);
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .card-body {
+      margin: 20px 0;
+      transform: translateZ(35px);
+    }
+
+    .card-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .card-role {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--neon-cyan);
+      margin-bottom: 14px;
+    }
+
+    .card-desc {
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    /* Futuristic Stack Pills */
+    .stack-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 14px;
+    }
+
+    .pill-hud {
+      background: rgba(0, 240, 255, 0.05);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      color: #d1fae5;
+      font-size: 0.76rem;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Action Links & Buttons */
+    .card-action {
+      transform: translateZ(30px);
+    }
+
+    .btn-cyber {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(121, 40, 202, 0.3));
+      border: 1px solid var(--neon-cyan);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-family: 'Orbitron', sans-serif;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-cyber:hover {
+      background: var(--neon-cyan);
+      color: #000;
+      box-shadow: 0 0 16px var(--neon-cyan);
+    }
+
+    /* Navigation Controls */
+    .deck-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      margin-top: 24px;
+      z-index: 2;
+    }
+
+    .control-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: rgba(13, 17, 28, 0.7);
+      color: var(--neon-cyan);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .control-btn:hover {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 12px var(--neon-cyan);
+    }
+
+    .dots-indicator {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dot-step {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dot-step.active {
+      background: var(--neon-cyan);
+      box-shadow: 0 0 8px var(--neon-cyan);
+      width: 22px;
+      border-radius: 5px;
+    }
+
+    /* Footer Coordinates */
+    .hud-footer {
+      margin-top: 28px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      text-align: center;
+      z-index: 2;
+    }
+
+    @media (max-width: 600px) {
+      .deck-viewport { min-height: 450px; }
+      .card-3d { padding: 22px; min-height: 440px; }
+      .card-title { font-size: 1.45rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cyber-bg"></div>
+
+  <!-- HUD Top Bar -->
+  <header class="hud-header">
+    <div class="hud-status">
+      <span class="hud-dot"></span>
+      <span>SYSTEM: 3D CYBER DECK v1.0</span>
+    </div>
+    <div style="color: var(--text-muted);">
+      <span id="card-counter">01 / 04</span>
+    </div>
+  </header>
+
+  <!-- 3D Interactive Viewport -->
+  <div class="deck-viewport" id="viewport">
+    
+    <div class="card-3d" id="deck-card">
+      <div class="glare" id="glare"></div>
+      
+      <!-- Dynamic Card Markup handled by JS -->
+      <div class="card-meta" id="card-meta"></div>
+      <div class="card-body" id="card-body"></div>
+      <div class="card-action" id="card-action"></div>
+    </div>
+
+  </div>
+
+  <!-- Deck Control Navigation -->
+  <div class="deck-controls">
+    <button class="control-btn" onclick="prevCard()">&#8592;</button>
+    <div class="dots-indicator" id="dots-container"></div>
+    <button class="control-btn" onclick="nextCard()">&#8594;</button>
+  </div>
+
+  <!-- HUD Footer -->
+  <footer class="hud-footer">
+    <div>&copy; <span id="year-label"></span> Anant Patel &bull; Drag / Hover Card to Tilt 3D Space</div>
+  </footer>
+
+  <script>
+    // --- Card Deck Data ---
+    const DECK = [
+      {
+        protocol: "PROTOCOL: BIO-01",
+        version: "NODE_STABLE",
+        title: "ANANT PATEL",
+        role: "Full-Stack Web Developer (MERN)",
+        desc: "Engineering high-performance web systems, reactive modular architectures, and canvas procedural simulations. Focused on declarative UI patterns and scalable API services.",
+        pills: ["React.js", "Node.js", "Express", "MongoDB", "Canvas IK", "Tailwind"],
+        btnText: "CONNECT TRANSMISSION",
+        btnUrl: "mailto:devanantpatel@gmail.com"
+      },
+      {
+        protocol: "PROTOCOL: SIM-02",
+        version: "INVERSE_KINEMATICS",
+        title: "SPIDER CRAWLER",
+        role: "Procedural Canvas Mechanics",
+        desc: "Autonomous multi-legged crawler with procedural target stalking, collision geometry, and responsive DOM climbing algorithms running in pure Vanilla JS.",
+        pills: ["HTML5 Canvas", "Inverse Kinematics", "Pure JS", "Web3Forms"],
+        btnText: "LAUNCH SIMULATION ↗",
+        btnUrl: "https://anant-spider-portfolio.netlify.app"
+      },
+      {
+        protocol: "PROTOCOL: CLI-03",
+        version: "UNIX_EMU",
+        title: "DEV TERMINAL",
+        role: "Shell Emulator & In-Window Matrix",
+        desc: "Zsh-styled developer command console featuring in-window rain animations, multi-palette theme switches, command history navigation, and mobile command chips.",
+        pills: ["Custom Key Parser", "Matrix Rain", "Theme Engine", "Mobile Chips"],
+        btnText: "ACCESS CONSOLE ↗",
+        btnUrl: "https://anant-terminal-portfolio.netlify.app"
+      },
+      {
+        protocol: "PROTOCOL: COMMS-04",
+        version: "DIRECT_LINK",
+        title: "CONTACT COORDINATES",
+        role: "Communication Endpoints",
+        desc: "Direct communication channels and code repository hub. Available for full-stack engineering roles and technical collaborations.",
+        pills: ["+91 76077 65685", "devanantpatel@gmail.com", "github.com/devanantpatel"],
+        btnText: "CALL / TRANSMIT ↗",
+        btnUrl: "tel:+917607765685"
+      }
+    ];
+
+    let currentIndex = 0;
+    const cardEl = document.getElementById('deck-card');
+    const glareEl = document.getElementById('glare');
+    const viewportEl = document.getElementById('viewport');
+    const dotsContainer = document.getElementById('dots-container');
+
+    // Dynamic Copyright Year
+    document.getElementById('year-label').textContent = new Date().getFullYear();
+
+    // Render Dots
+    DECK.forEach((_, idx) => {
+      const dot = document.createElement('div');
+      dot.className = `dot-step ${idx === 0 ? 'active' : ''}`;
+      dot.onclick = () => renderCard(idx);
+      dotsContainer.appendChild(dot);
+    });
+
+    function renderCard(idx) {
+      currentIndex = idx;
+      const data = DECK[idx];
+
+      // Update Text Content
+      document.getElementById('card-counter').textContent = `0${idx + 1} / 0${DECK.length}`;
+      
+      document.getElementById('card-meta').innerHTML = `
+        <span class="badge-protocol">${data.protocol}</span>
+        <span>${data.version}</span>
+      `;
+
+      document.getElementById('card-body').innerHTML = `
+        <h2 class="card-title">${data.title}</h2>
+        <div class="card-role">&gt; ${data.role}</div>
+        <p class="card-desc">${data.desc}</p>
+        <div class="stack-group">
+          ${data.pills.map(p => `<span class="pill-hud">${p}</span>`).join('')}
+        </div>
+      `;
+
+      document.getElementById('card-action').innerHTML = `
+        <a href="${data.btnUrl}" target="_blank" class="btn-cyber">${data.btnText}</a>
+      `;
+
+      // Update Dots
+      document.querySelectorAll('.dot-step').forEach((d, i) => {
+        d.classList.toggle('active', i === idx);
+      });
+    }
+
+    function nextCard() {
+      currentIndex = (currentIndex + 1) % DECK.length;
+      renderCard(currentIndex);
+    }
+
+    function prevCard() {
+      currentIndex = (currentIndex - 1 + DECK.length) % DECK.length;
+      renderCard(currentIndex);
+    }
+
+    // --- Gyroscopic 3D Tilt Engine ---
+    function handleTilt(xRatio, yRatio) {
+      const maxAngle = 18; // Max tilt rotation
+      const rotY = (xRatio - 0.5) * maxAngle * 2;
+      const rotX = (0.5 - yRatio) * maxAngle * 2;
+
+      cardEl.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+      glareEl.style.opacity = '1';
+      glareEl.style.background = `radial-gradient(circle at ${xRatio * 100}% ${yRatio * 100}%, rgba(0, 240, 255, 0.25), transparent 60%)`;
+    }
+
+    function resetTilt() {
+      cardEl.style.transform = 'rotateX(0deg) rotateY(0deg)';
+      glareEl.style.opacity = '0';
+    }
+
+    // Desktop Mouse Tracking
+    viewportEl.addEventListener('mousemove', (e) => {
+      const rect = viewportEl.getBoundingClientRect();
+      const xRatio = (e.clientX - rect.left) / rect.width;
+      const yRatio = (e.clientY - rect.top) / rect.height;
+      handleTilt(xRatio, yRatio);
+    });
+
+    viewportEl.addEventListener('mouseleave', resetTilt);
+
+    // Mobile Touch Drag Tracking
+    viewportEl.addEventListener('touchmove', (e) => {
+      const touch = e.touches[0];
+      const rect = viewportEl.getBoundingClientRect();
+      const xRatio = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+      const yRatio = Math.max(0, Math.min(1, (touch.clientY - rect.top) / rect.height));
+      handleTilt(xRatio, yRatio);
+    });
+
+    viewportEl.addEventListener('touchend', resetTilt);
+
+    // Initial Render
+    renderCard(0);
+  </script>
+</body>
+</html>
