@@ -9,6 +9,7 @@ Each project is modularly isolated and independently deployed.
 | **Autonomous Spider Crawler** | Pure JS, Canvas IK, CSS3, Web3Forms | [Live Demo ↗](https://anant-spider-portfolio.netlify.app) | [`/spider-crawler-portfolio`](./spider-crawler-portfolio/) | 🟢 Deployed |
 | **Developer Terminal (CLI)** | Vanilla JS, Matrix Canvas, CSS3 Vars | [Live Demo ↗](https://anant-terminal-portfolio.netlify.app) | [`/terminal-portfolio`](./terminal-portfolio/) | 🟢 Deployed |
 | **3D Cyber Deck** | Vanilla JS 3D Engine, Perspective Tilt, Cyber HUD | [Live Demo ↗](https://anant-3d-portfolio.netlify.app) | [`/cards-3d-portfolio`](./cards-3d-portfolio/) | 🟢 Deployed |
+| **AnantWeb (Browser Simulator)** | Chrome UI Simulation, Smart Search, Web3Forms | [Live Demo ↗](https://anant-browser-portfolio.netlify.app) | [`/browser-portfolio`](./browser-portfolio/) | 🟢 Deployed |
 | **Modern Minimalist / Bento Grid** | Modern CSS Grid, Glassmorphism | *Planned* | `/minimal-bento-portfolio` | ⚪ Next Up |
 
 ---
@@ -17,14 +18,9 @@ Each project is modularly isolated and independently deployed.
 my-portfolios/
 │
 ├── spider-crawler-portfolio/     # Autonomous Crawler & IK Mechanics
-│   ├── index.html
-│   └── README.md
-│
 ├── terminal-portfolio/           # Interactive Bash/Zsh CLI Experience
-│   ├── index.html
-│   └── README.md
-│
 ├── cards-3d-portfolio/           # Gyroscopic 3D Perspective Tilt Deck
+├── browser-portfolio/            # AnantWeb Browser & Google Search Simulator
 │   ├── index.html
 │   └── README.md
 │
