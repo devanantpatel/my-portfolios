@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Anant Patel | Developer Terminal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --terminal-bg: #0d1117;
+      --text: #c9d1d9;
+      --prompt-user: #58a6ff;
+      --prompt-host: #7ee787;
+      --accent: #2ea043;
+      --dim: #8b949e;
+      --error: #f85149;
+      --warning: #e3b341;
+      --info: #79c0ff;
+      --border: #30363d;
+      --cursor: #58a6ff;
+      --rain-color: rgba(88, 166, 255, 0.16);
+    }
+
+    [data-theme="matrix"] {
+      --bg: #010501;
+      --terminal-bg: #030d03;
+      --text: #00ff66;
+      --prompt-user: #33ff77;
+      --prompt-host: #00cc44;
+      --accent: #00ff66;
+      --dim: #008833;
+      --error: #ff3333;
+      --warning: #ffcc00;
+      --info: #66ff99;
+      --border: #004411;
+      --cursor: #00ff66;
+      --rain-color: rgba(0, 255, 102, 0.20);
+    }
+
+    [data-theme="cyberpunk"] {
+      --bg: #05020a;
+      --terminal-bg: #0f051d;
+      --text: #ff71ce;
+      --prompt-user: #01cdfe;
+      --prompt-host: #05ffa1;
+      --accent: #b967ff;
+      --dim: #795290;
+      --error: #ff0055;
+      --warning: #fffb96;
+      --info: #01cdfe;
+      --border: #3c1e6d;
+      --cursor: #05ffa1;
+      --rain-color: rgba(255, 113, 206, 0.18);
+    }
+
+    [data-theme="amber"] {
+      --bg: #0a0601;
+      --terminal-bg: #140d02;
+      --text: #ffb000;
+      --prompt-user: #ffd000;
+      --prompt-host: #ff9000;
+      --accent: #ffb000;
+      --dim: #996900;
+      --error: #ff4444;
+      --warning: #ffe680;
+      --info: #ffc44d;
+      --border: #4d3300;
+      --cursor: #ffb000;
+      --rain-color: rgba(255, 176, 0, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Fira Code', monospace;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    .terminal-window {
+      width: 100%;
+      max-width: 940px;
+      height: 86vh;
+      background: var(--terminal-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+      overflow: hidden;
+      position: relative;
+    }
+
+    #window-canvas {
+      position: absolute;
+      top: 42px;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 85px);
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+
+    .terminal-header {
+      background: rgba(0, 0, 0, 0.55);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+      position: relative;
+      z-index: 2;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 7px;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dot-close { background-color: #ff5f56; }
+    .dot-min { background-color: #ffbd2e; }
+    .dot-max { background-color: #27c93f; }
+
+    .window-title {
+      font-size: 0.78rem;
+      color: var(--dim);
+      letter-spacing: 0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+    }
+
+    .theme-select {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .theme-select option {
+      background: #161b22;
+      color: #c9d1d9;
+    }
+
+    .terminal-body {
+      flex: 1;
+      padding: 18px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      position: relative;
+      z-index: 1;
+    }
+
+    .terminal-body::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .terminal-body::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    .command-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .prompt {
+      margin-right: 8px;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .prompt .user { color: var(--prompt-user); font-weight: bold; }
+    .prompt .host { color: var(--prompt-host); }
+    .prompt .path { color: var(--text); }
+    .prompt .symbol { color: var(--dim); }
+
+    .input-line {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .cli-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 0.88rem;
+      font-family: inherit;
+      caret-color: var(--cursor);
+      min-width: 120px;
+    }
+
+    .output {
+      margin-bottom: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .banner {
+      color: var(--prompt-host);
+      font-weight: bold;
+      line-height: 1.25;
+      margin-bottom: 12px;
+      font-size: 0.75rem;
+    }
+
+    .highlight { color: var(--info); font-weight: bold; }
+    .dim-txt { color: var(--dim); }
+    .accent-txt { color: var(--accent); }
+    .warning-txt { color: var(--warning); }
+    .error-txt { color: var(--error); }
+
+    .cmd-table {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      row-gap: 5px;
+      margin: 8px 0;
+    }
+
+    .cmd-name {
+      color: var(--prompt-user);
+      font-weight: 600;
+    }
+
+    .project-card {
+      border-left: 2px solid var(--accent);
+      padding: 6px 0 6px 12px;
+      margin: 10px 0;
+    }
+
+    .project-title {
+      font-weight: 700;
+      color: var(--prompt-host);
+    }
+
+    a.cli-link {
+      color: var(--info);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .mobile-chips {
+      display: flex;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.45);
+      border-top: 1px solid var(--border);
+      overflow-x: auto;
+      white-space: nowrap;
+      position: relative;
+      z-index: 2;
+    }
+
+    .mobile-chips::-webkit-scrollbar { display: none; }
+
+    .chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--prompt-user);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.74rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .chip:active {
+      background: var(--border);
+    }
+
+    .terminal-footer {
+      background: rgba(0, 0, 0, 0.65);
+      border-top: 1px solid var(--border);
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--dim);
+      user-select: none;
+      position: relative;
+      z-index: 2;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-indicator {
+      width: 7px;
+      height: 7px;
+      background-color: var(--prompt-host);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--prompt-host);
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 4px; }
+      .terminal-window { height: 96vh; border-radius: 8px; }
+      .cmd-table { grid-template-columns: 100px 1fr; font-size: 0.8rem; }
+      .banner { font-size: 0.60rem; }
+      .terminal-footer { flex-direction: column; gap: 4px; text-align: center; }
+    }
+  </style>
+  </head>
+  <body data-theme="default">
+
+  <div class="terminal-window" id="window" onclick="focusInput(event)">
+    <canvas id="window-canvas"></canvas>
+
+    <div class="terminal-header">
+      <div class="window-controls">
+        <span class="dot dot-close"></span>
+        <span class="dot dot-min"></span>
+        <span class="dot dot-max"></span>
+      </div>
+      <div class="window-title">anant@portfolio-cli: ~ (zsh)</div>
+      
+      <div class="header-actions">
+        <select class="theme-select" id="theme-selector" onchange="switchTheme(this.value)">
+          <option value="default">Default Dark</option>
+          <option value="matrix">Matrix Green</option>
+          <option value="cyberpunk">Cyberpunk Neon</option>
+          <option value="amber">Classic Amber</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="terminal-body" id="terminal-body">
+      <div class="output" id="welcome-output"></div>
+      
+      <div id="history"></div>
+
+      <div class="input-line">
+        <div class="prompt">
+          <span class="user">anant</span><span class="symbol">@</span><span class="host">portfolio</span><span class="symbol">:</span><span class="path">~</span><span class="symbol">$</span>
+        </div>
+        <input type="text" id="cli-input" class="cli-input" spellcheck="false" autocomplete="off" autofocus />
+      </div>
+    </div>
+
+    <div class="mobile-chips">
+      <div class="chip" onclick="executeChip('help')">help</div>
+      <div class="chip" onclick="executeChip('about')">about</div>
+      <div class="chip" onclick="executeChip('skills')">skills</div>
+      <div class="chip" onclick="executeChip('projects')">projects</div>
+      <div class="chip" onclick="executeChip('contact')">contact</div>
+      <div class="chip" onclick="executeChip('clear')">clear</div>
+    </div>
+
+    <div class="terminal-footer">
+      <div class="footer-left">
+        <span class="status-indicator"></span>
+        <span>SYSTEM IDLE | PORT: 8080 (LIVE)</span>
+      </div>
+      <div class="footer-right">
+        <span>&copy; <span id="year-label"></span> Anant Patel. All rights reserved.</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('window-canvas');
+    const ctx = canvas.getContext('2d');
+    const windowEl = document.getElementById('window');
+
+    function resizeCanvas() {
+      canvas.width = windowEl.clientWidth;
+      canvas.height = windowEl.clientHeight - 85;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const chars = '0123456789ABCDEF{}<>=+/*#~_';
+    const fontSize = 13;
+    let columns = Math.floor(canvas.width / fontSize);
+    let drops = Array(columns).fill(1);
+
+    function drawMatrixRain() {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const style = getComputedStyle(document.body);
+      ctx.fillStyle = style.getPropertyValue('--rain-color').trim() || 'rgba(88, 166, 255, 0.16)';
+      ctx.font = fontSize + 'px Fira Code';
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars.charAt(Math.floor(Math.random() * chars.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    }
+    setInterval(drawMatrixRain, 40);
+
+    document.getElementById('year-label').textContent = new Date().getFullYear();
+
+    const input = document.getElementById('cli-input');
+    const historyDiv = document.getElementById('history');
+    const terminalBody = document.getElementById('terminal-body');
+    const rootBody = document.body;
+    const themeSelect = document.getElementById('theme-selector');
+
+    let cmdHistory = [];
+    let historyIndex = -1;
+
+    const BANNER_ART = `
+ █████╗ ███╗   ██╗ █████╗ ███╗   ██╗████████╗
+██╔══██╗████╗  ██║██╔══██╗████╗  ██║╚══██╔══╝
+███████║██╔██╗ ██║███████║██╔██╗ ██║   ██║   
+██╔══██║██║╚██╗██║██╔══██║██║╚██╗██║   ██║   
+██║  ██║██║ ╚████║██║  ██║██║ ╚████║   ██║   
+╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝   
+Interactive Terminal v2.3.0 (x86_64-portfolio-kernel)
+Type '<span class="highlight">help</span>' to inspect valid system calls.
+`;
+
+    const COMMANDS = {
+      help: `
+<span class="dim-txt">Available System Commands:</span>
+<div class="cmd-table">
+  <span class="cmd-name">about</span><span>Executive overview & developer profile</span>
+  <span class="cmd-name">skills</span><span>Technical competencies & toolchain stack</span>
+  <span class="cmd-name">projects</span><span>Production deliverables & live demos</span>
+  <span class="cmd-name">contact</span><span>Contact coordinates (Phone, Email, GitHub)</span>
+  <span class="cmd-name">theme</span><span>Switch shell styling (or use top dropdown)</span>
+  <span class="cmd-name">history</span><span>Print recent command history</span>
+  <span class="cmd-name">clear</span><span>Flush active viewport buffer</span>
+  <span class="cmd-name">sudo</span><span>Elevate shell session privilege</span>
+</div>`,
+
+      about: `
+<span class="highlight">[SYSTEM ARCHIVE: ANANT PATEL]</span>
+--------------------------------------------------
+<span class="accent-txt">Role:</span> Full-Stack Web Developer (MERN)
+<span class="accent-txt">Focus:</span> Responsive Interfaces, Scalable Backend Services, Procedural Visuals
+
+Hands-on developer with experience engineering full-stack applications,
+implementing structured API communication, and crafting interactive frontend mechanics.
+Passionate about performance optimization and declarative architectures.`,
+
+      skills: `
+<span class="highlight">[TOOLCHAIN & ENVIRONMENT STACK]</span>
+--------------------------------------------------
+<span class="warning-txt">Frontend :</span> React.js, JavaScript (ES6+), HTML5 Canvas, Tailwind, CSS3
+<span class="warning-txt">Backend  :</span> Node.js, Express.js, REST API Architecture
+<span class="warning-txt">Database :</span> MongoDB, Mongoose ODM
+<span class="warning-txt">DevTools :</span> Git, GitHub, Postman, Netlify, Linux/Bash`,
+
+      projects: `
+<span class="highlight">[FEATURED PRODUCTION BUILDS]</span>
+--------------------------------------------------
+<div class="project-card">
+  <div class="project-title">01. Autonomous Spider Crawler Portfolio</div>
+  <div class="dim-txt">Canvas-based Inverse Kinematics engine with dynamic DOM crawling and live GitHub sync.</div>
+  <div>Tech: Pure JS, HTML5 Canvas API, CSS3, Web3Forms</div>
+  <div>Live: <a class="cli-link" href="https://anant-spider-portfolio.netlify.app" target="_blank">https://anant-spider-portfolio.netlify.app</a></div>
+</div>
+
+<div class="project-card">
+  <div class="project-title">02. Creative Portfolios Monorepo Hub</div>
+  <div class="dim-txt">Centralized repository powering modular theme deployments.</div>
+  <div>Tech: Git Architecture, Netlify Edge Deploys</div>
+  <div>Repo: <a class="cli-link" href="https://github.com/devanantpatel/my-portfolios" target="_blank">github.com/devanantpatel/my-portfolios</a></div>
+</div>`,
+
+      contact: `
+<span class="highlight">[DIRECT CONTACT COORDINATES]</span>
+--------------------------------------------------
+* Phone   : <a class="cli-link" href="tel:+917607765685">+91 76077 65685</a>
+* E-mail  : <a class="cli-link" href="mailto:devanantpatel@gmail.com">devanantpatel@gmail.com</a>
+* GitHub  : <a class="cli-link" href="https://github.com/devanantpatel" target="_blank">github.com/devanantpatel</a>`
+    };
+
+    document.getElementById('welcome-output').innerHTML = `<div class="banner">${BANNER_ART}</div>`;
+
+    function focusInput(e) {
+      if (e && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT')) {
+        return;
+      }
+      input.focus();
+    }
+
+    function switchTheme(themeName) {
+      if (['default', 'matrix', 'cyberpunk', 'amber'].includes(themeName)) {
+        rootBody.setAttribute('data-theme', themeName);
+        themeSelect.value = themeName;
+      }
+    }
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const command = input.value.trim();
+        if (command) {
+          cmdHistory.push(command);
+          historyIndex = cmdHistory.length;
+          processCommand(command);
+        }
+        input.value = '';
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (historyIndex > 0) {
+          historyIndex--;
+          input.value = cmdHistory[historyIndex];
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (historyIndex < cmdHistory.length - 1) {
+          historyIndex++;
+          input.value = cmdHistory[historyIndex];
+        } else {
+          historyIndex = cmdHistory.length;
+          input.value = '';
+        }
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        handleAutoComplete();
+      }
+    });
+
+    function handleAutoComplete() {
+      const val = input.value.toLowerCase().trim();
+      if (!val) return;
+      const list = Object.keys(COMMANDS).concat(['theme matrix', 'theme cyberpunk', 'theme amber', 'theme default', 'clear', 'sudo']);
+      const match = list.find(cmd => cmd.startsWith(val));
+      if (match) input.value = match;
+    }
+
+    function processCommand(rawInput) {
+      const parts = rawInput.split(' ');
+      const mainCmd = parts[0].toLowerCase();
+      const arg = parts[1] ? parts[1].toLowerCase() : null;
+
+      const cmdEcho = document.createElement('div');
+      cmdEcho.className = 'command-line';
+      cmdEcho.innerHTML = `
+        <div class="prompt">
+          <span class="user">anant</span><span class="symbol">@</span><span class="host">portfolio</span><span class="symbol">:</span><span class="path">~</span><span class="symbol">$</span>
+        </div>
+        <span>${escapeHtml(rawInput)}</span>
+      `;
+      historyDiv.appendChild(cmdEcho);
+
+      const response = document.createElement('div');
+      response.className = 'output';
+
+      switch (mainCmd) {
+        case 'help':
+        case 'about':
+        case 'skills':
+        case 'projects':
+        case 'contact':
+          response.innerHTML = COMMANDS[mainCmd];
+          break;
+
+        case 'clear':
+        case 'cls':
+          historyDiv.innerHTML = '';
+          terminalBody.scrollTop = 0;
+          return;
+
+        case 'history':
+          response.innerHTML = cmdHistory.map((c, i) => `${i + 1}  ${escapeHtml(c)}`).join('<br>');
+          break;
+
+        case 'theme':
+          if (['default', 'matrix', 'cyberpunk', 'amber'].includes(arg)) {
+            switchTheme(arg);
+            response.innerHTML = `<span class="accent-txt">Terminal visual scheme shifted to '${arg}'.</span>`;
+          } else {
+            response.innerHTML = `<span class="warning-txt">Usage:</span> theme &lt;default | matrix | cyberpunk | amber&gt; (or select from top right)`;
+          }
+          break;
+
+        case 'sudo':
+          response.innerHTML = `<span class="error-txt">Access Denied:</span> User 'anant' is not in the sudoers file. Incident reported.`;
+          break;
+
+        default:
+          response.innerHTML = `<span class="error-txt">zsh: command not found: ${escapeHtml(mainCmd)}</span>. Type '<span class="highlight">help</span>' for valid commands.`;
+          break;
+      }
+
+      historyDiv.appendChild(response);
+      terminalBody.scrollTop = terminalBody.scrollHeight;
+    }
+
+    function executeChip(cmd) {
+      input.value = cmd;
+      cmdHistory.push(cmd);
+      historyIndex = cmdHistory.length;
+      processCommand(cmd);
+      input.value = '';
+      focusInput();
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+      });
+    }
+  </script>
+</body>
+</html>
